@@ -1,0 +1,79 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "scrolled": false
+   },
+   "outputs": [],
+   "source": [
+    "import pandas as pd\n",
+    "file = pd.ExcelFile('Superstore.xls')\n",
+    "x1 = pd.ExcelFile(file)\n",
+    "df1 = x1.parse('Orders')\n",
+    "from datetime import datetime, timedelta\n",
+    "\n",
+    "#Computing for total sales per year\n",
+    "df1['Order Year'] = df1['Order Date'].map(lambda x: x.strftime('%Y'))\n",
+    "Sales_Year = df1.groupby('Order Year')['Sales'].sum()\n",
+    "print(Sales_Year)\n",
+    "\n",
+    "#Computing for annual growth of sales\n",
+    "SalesGrowth_byYear = (Sales_Year.pct_change() * 100).reset_index()\n",
+    "SalesGrowth_byYear = SalesGrowth_byYear.rename(columns={'Sales': 'Sales Growth (in %)'})\n",
+    "print(SalesGrowth_byYear)\n",
+    "\n",
+    "#Computing for compounded annual growth rate(CAGR)\n",
+    "Number_of_Days = df1['Order Date'].max() - df1['Order Date'].min()\n",
+    "Number_of_Years = (Number_of_Days/timedelta(days=1))/365\n",
+    "CAGR = ((Sales_Year.iloc[-1]/Sales_Year[0])**(1/Number_of_Years))-1\n",
+    "print(\"The current CAGR is \" + \"{:.2%}\".format(CAGR))\n",
+    "\n",
+    "#Computing for total sales per City\n",
+    "Sales_byCity = df1.pivot_table(values=['Sales'], index=['City'], aggfunc=sum).sort_values(['Sales'], ascending=False)\n",
+    "print(Sales_byCity)\n",
+    "\n",
+    "#Computing for Sales per order\n",
+    "Sales_perOrder_byCategory = df1.groupby(['Category', 'Sub-Category']).agg({'Sales': sum, 'Order ID' : \"count\"})\n",
+    "Sales_perOrder_byCategory['Sales per Order'] = Sales_perOrder_byCategory['Sales']/Sales_perOrder_byCategory['Order ID']\n",
+    "Sales_perOrder_byCategory = Sales_perOrder_byCategory.rename(columns={'Order ID' : 'Order Count'})\n",
+    "print(Sales_perOrder_byCategory)\n",
+    "\n",
+    "#Top 10 customer per year\n",
+    "Sales_byCustomer = df1.groupby(['Order Year', 'Customer Name']).agg({'Sales':sum})\n",
+    "Sales_byCustomer = Sales_byCustomer.sort_values(['Order Year', 'Sales'], ascending = [True, False])\n",
+    "Sales_byCustomerTop10 = Sales_byCustomer.groupby(['Order Year']).head(10)\n",
+    "print(Sales_byCustomerTop10)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.7.3"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}
